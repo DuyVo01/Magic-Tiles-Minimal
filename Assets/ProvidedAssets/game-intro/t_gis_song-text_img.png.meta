@@ -169,6 +169,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -647,7 +660,28 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      t_gis_song-text_img_0: -5396355801228973516
+      t_gis_song-text_img_1: 2719616340759432431
+      t_gis_song-text_img_10: 3123846562843412854
+      t_gis_song-text_img_11: 1133822964627741198
+      t_gis_song-text_img_12: -689153840713673546
+      t_gis_song-text_img_13: 3721518065911615026
+      t_gis_song-text_img_14: -2649562865105671963
+      t_gis_song-text_img_15: 1383006861270982222
+      t_gis_song-text_img_16: 7136914925535876917
+      t_gis_song-text_img_17: -7460297124477913541
+      t_gis_song-text_img_18: 6139939341379987770
+      t_gis_song-text_img_19: 5181686039500175689
+      t_gis_song-text_img_2: -5496968425683268673
+      t_gis_song-text_img_20: -7025112408421150542
+      t_gis_song-text_img_3: 6359557935630132098
+      t_gis_song-text_img_4: -5451841546738650394
+      t_gis_song-text_img_5: -8217125857408425771
+      t_gis_song-text_img_6: -3606630226838911111
+      t_gis_song-text_img_7: 6379092464683174710
+      t_gis_song-text_img_8: -6423573618439099083
+      t_gis_song-text_img_9: -385677407411922975
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

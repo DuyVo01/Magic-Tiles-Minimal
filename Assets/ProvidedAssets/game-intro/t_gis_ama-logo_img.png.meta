@@ -133,6 +133,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -347,7 +360,16 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      t_gis_ama-logo_img_0: 1344879196820954044
+      t_gis_ama-logo_img_1: 1130218945667293608
+      t_gis_ama-logo_img_2: 8676635525933489191
+      t_gis_ama-logo_img_3: 3275592464846339956
+      t_gis_ama-logo_img_4: -4677758810406048711
+      t_gis_ama-logo_img_5: 1427158225180910669
+      t_gis_ama-logo_img_6: 3794732166153104639
+      t_gis_ama-logo_img_7: 431754217229644698
+      t_gis_ama-logo_img_8: -6230587411047021890
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

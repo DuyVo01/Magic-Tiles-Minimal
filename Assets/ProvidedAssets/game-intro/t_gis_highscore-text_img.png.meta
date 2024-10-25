@@ -154,6 +154,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -522,7 +535,23 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      t_gis_highscore-text_img_0: -6392808560377399426
+      t_gis_highscore-text_img_1: 2812829181468670386
+      t_gis_highscore-text_img_10: 7084281558011164206
+      t_gis_highscore-text_img_11: 3625481550256663828
+      t_gis_highscore-text_img_12: 1867066383320713489
+      t_gis_highscore-text_img_13: -104929051043633198
+      t_gis_highscore-text_img_14: -1136041710871219279
+      t_gis_highscore-text_img_15: 3733370907954190391
+      t_gis_highscore-text_img_2: -8959502982345305926
+      t_gis_highscore-text_img_3: -3620800884080581435
+      t_gis_highscore-text_img_4: 5022827781738536163
+      t_gis_highscore-text_img_5: 5150157514509669080
+      t_gis_highscore-text_img_6: 7271706588208021625
+      t_gis_highscore-text_img_7: 891500701462416810
+      t_gis_highscore-text_img_8: -5871614816776167436
+      t_gis_highscore-text_img_9: 6735383679298392275
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

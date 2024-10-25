@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class TileScroller : MonoBehaviour
@@ -8,31 +8,28 @@ public class TileScroller : MonoBehaviour
     private SongObject songObject;
 
     [SerializeField]
-    private GameObject baseTile;
+    private GameObject baseTilePrefab;
+
+    [SerializeField]
+    private GameObject baseLongTilePrefab;
 
     [SerializeField]
     private RectTransform scoringLine;
-    private RectTransform rectTransform;
-    public RectTransform ThisRectTransform
-    {
-        get
-        {
-            if (rectTransform == null)
-            {
-                rectTransform = GetComponent<RectTransform>();
-            }
 
-            return rectTransform;
-        }
-        set => rectTransform = value;
-    }
+
+    private RectTransform rectTransform;
 
     private float totalTimeOfScrolling = 0f;
     private float scrollSpeed = 0f;
-
-    private Vector2[] tilePositions;
     private float[] tilePositionX = new float[4];
-    private int lastPositionXSpawned = 0;
+    private HashSet<int> occupiedPosX = new HashSet<int>();
+    List<TileLineX> tileLines = new List<TileLineX>();
+
+    public RectTransform ThisRectTransform
+    {
+        get { return rectTransform ??= GetComponent<RectTransform>(); }
+        set => rectTransform = value;
+    }
 
     private void Start()
     {
@@ -41,61 +38,92 @@ public class TileScroller : MonoBehaviour
             return;
         }
 
+        // *****************
         float tileSizeX = ThisRectTransform.rect.width / 4;
 
         for (int i = 0; i < tilePositionX.Length; i++)
         {
             tilePositionX[i] = tileSizeX * i;
         }
-        tilePositions = new Vector2[songObject.totalNumberOfNode];
+        // ******************
 
+        // ********************
         float rectHeight = 0;
-
         for (int i = 0; i < songObject.totalNumberOfNode; i++)
         {
-            totalTimeOfScrolling += songObject.noteTimeLapse[i];
-            int randomIndexForTilePositionX;
+            float[] tilesPos = GetAvailablePosition(songObject.tiles[i].tileCount);
 
-            do
+            for (int j = 0; j < tilesPos.Length; j++)
             {
-                randomIndexForTilePositionX = UnityEngine.Random.Range(0, tilePositionX.Length);
-            } while (lastPositionXSpawned == randomIndexForTilePositionX);
+                tileLines.Add(
+                    new TileLineX
+                    {
+                        lineIndex = i,
+                        tileType = songObject.tiles[i].tileType,
+                        height = rectHeight,
+                        tilePositionsX = tilesPos,
+                        lineTimeLapse = songObject.tiles[i].timelapse,
+                    }
+                );
+            }
 
-            tilePositions[i] = new Vector2(tilePositionX[randomIndexForTilePositionX], rectHeight);
+            rectHeight += GetRectHeightFromTimelapse(songObject.tiles[i].timelapse);
 
-            rectHeight += GetRectHeightFromTimelapse(songObject.noteTimeLapse[i]);
-
-            lastPositionXSpawned = randomIndexForTilePositionX;
+            totalTimeOfScrolling += songObject.tiles[i].timelapse;
         }
 
-        for (int i = 0; i < tilePositions.Length; i++)
+        // ********************
+
+        for (int i = 0; i < tileLines.Count; i++)
         {
-            TileBehavior tile = Instantiate(baseTile, ThisRectTransform)
-                .GetComponent<TileBehavior>();
-            if (tile == null)
+            TileBehavior tile;
+
+            if (i + 1 < tileLines.Count)
             {
-                Debug.LogError("Tile is missing its behavioral component");
-                return;
+                tileLines[i].nextTileLine = tileLines[i + 1];
             }
-            Vector2 pos = tilePositions[i];
-            tile.SetTilePosition(pos);
-            tile.SetTilePivot(new Vector2(0, 0));
-            tile.SetScoringLine(scoringLine);
-            tile.SetTileTimelapse(songObject.noteTimeLapse[i]);
+
+            for (int j = 0; j < tileLines[i].tilePositionsX.Length; j++)
+            {
+                Vector2 tilePos = new Vector2(tileLines[i].tilePositionsX[j], tileLines[i].height);
+
+                if (tileLines[i].tileType == TileType.shortTile)
+                {
+                    tile = Instantiate(baseTilePrefab, ThisRectTransform)
+                        .GetComponent<TileBehavior>();
+                }
+                else
+                {
+                    tile = Instantiate(baseLongTilePrefab, ThisRectTransform)
+                        .GetComponent<TileBehavior>();
+                    tile.SetHeight(GetRectHeightFromTimelapse(tileLines[i].lineTimeLapse));
+                }
+
+                if (tile == null)
+                {
+                    Debug.LogError("Tile is missing its behavioral component");
+                    return;
+                }
+
+                tile.SetTilePosition(tilePos);
+                tile.SetTilePivot(new Vector2(0, 0));
+                tile.SetScoringLine(scoringLine);
+                tile.SetTileTimelapse(tileLines[i].lineTimeLapse);
+                tile.AdditionalSetup();
+
+                tileLines[i].tileItem.Add(tile);
+            }
         }
 
         ThisRectTransform.SetNewRectHeight(rectHeight);
         scrollSpeed = rectHeight / totalTimeOfScrolling;
 
         ThisRectTransform.anchoredPosition = new Vector2(0, 812);
-
-        Debug.Log($"Scroll speed {scrollSpeed}");
-        Debug.Log($"Total scrolling Time {totalTimeOfScrolling}");
     }
 
     private void Update()
     {
-        //ThisRectTransform.anchoredPosition += new Vector2(0, -scrollSpeed * Time.deltaTime);
+        ThisRectTransform.anchoredPosition += new Vector2(0, -scrollSpeed * Time.deltaTime);
     }
 
     private float GetRectHeightFromTimelapse(float timelapse)
@@ -107,4 +135,50 @@ public class TileScroller : MonoBehaviour
 
         return result;
     }
+
+    private float[] GetAvailablePosition(int numberOfPosToGet)
+    {
+        HashSet<int> availableIndicesOfPosX = new HashSet<int>();
+
+        for (int i = 0; i < tilePositionX.Length; i++)
+        {
+            if (!occupiedPosX.Contains(i))
+            {
+                if (availableIndicesOfPosX.Count > 0)
+                {
+                    if (Mathf.Abs(i - availableIndicesOfPosX.Last()) != 2)
+                    {
+                        continue;
+                    }
+                }
+                availableIndicesOfPosX.Add(i);
+            }
+        }
+
+        occupiedPosX.Clear();
+        float[] position = new float[numberOfPosToGet];
+
+        for (int i = 0; i < numberOfPosToGet; i++)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, availableIndicesOfPosX.Count);
+            int occupiedIndex = availableIndicesOfPosX.ElementAt(randomIndex);
+
+            position[i] = tilePositionX[occupiedIndex];
+            occupiedPosX.Add(occupiedIndex);
+            availableIndicesOfPosX.Remove(occupiedIndex);
+        }
+
+        return position;
+    }
+}
+
+public class TileLineX
+{
+    public int lineIndex;
+    public TileType tileType;
+    public float[] tilePositionsX;
+    public float height;
+    public float lineTimeLapse;
+    public List<TileBehavior> tileItem;
+    public TileLineX nextTileLine;
 }
