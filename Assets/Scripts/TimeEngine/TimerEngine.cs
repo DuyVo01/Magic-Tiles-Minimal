@@ -8,7 +8,6 @@ using UnityUtils.LowLevel;
 using UnityEditor;
 #endif
 
-
 namespace ImprovedTimer
 {
     internal static class TimerBootstrapper
@@ -35,7 +34,8 @@ namespace ImprovedTimer
 #endif
         }
 
-        private static void OnPlayModeState(PlayModeStateChange state)
+#if UNITY_EDITOR
+        internal static void OnPlayModeState(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.ExitingEditMode)
             {
@@ -47,13 +47,14 @@ namespace ImprovedTimer
                 TimerManager.Clear();
             }
         }
+#endif
 
-        private static void RemoveTimerManager<T>(ref PlayerLoopSystem loop)
+        internal static void RemoveTimerManager<T>(ref PlayerLoopSystem loop)
         {
             PlayerLoopUtils.RemoveSystem<T>(ref loop, in timerSystem);
         }
 
-        private static bool InsertTimerManager<T>(ref PlayerLoopSystem loop, int index)
+        internal static bool InsertTimerManager<T>(ref PlayerLoopSystem loop, int index)
         {
             timerSystem = new PlayerLoopSystem()
             {

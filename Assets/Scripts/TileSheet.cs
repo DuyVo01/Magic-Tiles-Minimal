@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PrimeTween;
+using R3;
 using UnityEngine;
 
 public class TileSheet : MonoBehaviour
@@ -21,6 +22,12 @@ public class TileSheet : MonoBehaviour
     [SerializeField]
     private bool isDebug;
 
+    [SerializeField]
+    private float debugSpeedReduction;
+
+    [SerializeField]
+    private Vector2 restartPosition;
+
     private RectTransform rectTransform;
 
     private float totalTimeOfScrolling = 0f;
@@ -32,14 +39,14 @@ public class TileSheet : MonoBehaviour
     private TileLine lastSpawnedTileLine;
 
     private GameObjectPool tileLinePool;
-    private Canvas canvas;
 
     private bool shouldScroll;
+
+    DisposableBag subscription;
 
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
-        canvas = GetComponentInParent<Canvas>();
     }
 
     void Start()
@@ -65,44 +72,6 @@ public class TileSheet : MonoBehaviour
 
             if (i <= 5)
             {
-                // float[] tilesPos = GetAvailablePosition(songObject.tiles[i].tileCount);
-
-                // TileLine tileLine = tileLinePool.Get().GetComponent<TileLine>();
-
-                // if (!lastSpawnedTileLine.IsNull())
-                // {
-                //     tileLine.SubscribeToLastTileLine(lastSpawnedTileLine);
-                // }
-
-                // tileLine.SetSize(
-                //     new Vector2(
-                //         rectTransform.rect.width,
-                //         GetRectHeightFromTimelapse(songObject.tiles[i].timelapse)
-                //     )
-                // );
-                // tileLine.SetPositionY(currentRectHeight);
-                // tileLine.SetScoringLine(scoringLine);
-                // tileLine.GenerateTiles(
-                //     tilesPos,
-                //     songObject.tiles[i].tileType,
-                //     songObject.tiles[i].timelapse
-                // );
-                // tileLine.OnPassingScoringLine(
-                //     (tileLine) =>
-                //     {
-                //         tileLinePool.Return(tileLine.gameObject);
-                //         AddNewTileLine();
-                //     }
-                // );
-                // tileLine.SetBottomPoint(bottom.position);
-                // if (i == 0)
-                // {
-                //     tileLine.EnableTiles();
-                // }
-
-                // lastSpawnedTileLine = tileLine;
-                // lastSpawnedIndex = i;
-                // currentRectHeight += height;
                 ConfigureTile(i);
             }
             preCalculateHeight += height;
@@ -111,6 +80,20 @@ public class TileSheet : MonoBehaviour
         }
         rectTransform.SetNewRectHeight(preCalculateHeight);
         scrollSpeed = preCalculateHeight / totalTimeOfScrolling;
+
+        GameManager.Instance.SetSong(songObject);
+
+        GameManager
+            .Instance.IsGameRunning.Subscribe(r =>
+            {
+                shouldScroll = r;
+            })
+            .AddTo(ref subscription);
+    }
+
+    void OnDestroy()
+    {
+        subscription.Dispose();
     }
 
     private void Update()
@@ -121,11 +104,19 @@ public class TileSheet : MonoBehaviour
         }
         if (isDebug)
         {
-            rectTransform.anchoredPosition += new Vector2(0, -scrollSpeed * Time.deltaTime / 20);
+            rectTransform.anchoredPosition += new Vector2(
+                0,
+                -scrollSpeed * Time.deltaTime / debugSpeedReduction
+            );
         }
         else
         {
             rectTransform.anchoredPosition += new Vector2(0, -scrollSpeed * Time.deltaTime);
+        }
+
+        if (GameManager.Instance.NumberOfTileLineLeft == 0)
+        {
+            RestartSong();
         }
     }
 
@@ -183,38 +174,6 @@ public class TileSheet : MonoBehaviour
         }
 
         ConfigureTile(spawnIndex);
-        // float[] tilesPos = GetAvailablePosition(songObject.tiles[spawnIndex].tileCount);
-
-        // TileLine tileLine = tileLinePool.Get().GetComponent<TileLine>();
-
-        // if (!lastSpawnedTileLine.IsNull())
-        // {
-        //     tileLine.SubscribeToLastTileLine(lastSpawnedTileLine);
-        // }
-
-        // float height = GetRectHeightFromTimelapse(songObject.tiles[spawnIndex].timelapse);
-
-        // tileLine.SetSize(new Vector2(rectTransform.rect.width, height));
-        // tileLine.SetPositionY(currentRectHeight);
-        // tileLine.SetScoringLine(scoringLine);
-        // tileLine.GenerateTiles(
-        //     tilesPos,
-        //     songObject.tiles[spawnIndex].tileType,
-        //     songObject.tiles[spawnIndex].timelapse
-        // );
-        // tileLine.OnPassingScoringLine(
-        //     (tileLine) =>
-        //     {
-        //         tileLinePool.Return(tileLine.gameObject);
-        //         AddNewTileLine();
-        //     }
-        // );
-        // tileLine.SetBottomPoint(bottom.position);
-        // tileLine.SetState();
-
-        // lastSpawnedTileLine = tileLine;
-        // lastSpawnedIndex = spawnIndex;
-        // currentRectHeight += height;
     }
 
     private void ConfigureTile(int index)
@@ -224,11 +183,7 @@ public class TileSheet : MonoBehaviour
         float[] tilesPos = GetAvailablePosition(songObject.tiles[index].tileCount);
 
         TileLine tileLine = tileLinePool.Get().GetComponent<TileLine>();
-
-        if (!lastSpawnedTileLine.IsNull())
-        {
-            tileLine.SubscribeToLastTileLine(lastSpawnedTileLine);
-        }
+        tileLine.ReSetState();
 
         tileLine.SetSize(
             new Vector2(
@@ -255,12 +210,17 @@ public class TileSheet : MonoBehaviour
         if (index == 0)
         {
             tileLine.EnableTiles();
+            tileLine.SetFirstTile();
         }
         tileLine.OnPassingTheLineUnPressed(HandlerUnPressedTilePass);
         tileLine.OnMissClick(() =>
         {
             shouldScroll = false;
         });
+        if (!lastSpawnedTileLine.IsNull())
+        {
+            tileLine.SubscribeToLastTileLine(lastSpawnedTileLine);
+        }
 
         lastSpawnedTileLine = tileLine;
         lastSpawnedIndex = index;
@@ -269,13 +229,33 @@ public class TileSheet : MonoBehaviour
 
     private void HandlerUnPressedTilePass(float unPressedTileHeight)
     {
-        Tween.UIAnchoredPositionY(
-            rectTransform,
-            rectTransform.anchoredPosition.y + unPressedTileHeight,
-            0.2f,
-            Ease.Linear
-        );
+        Tween
+            .UIAnchoredPositionY(
+                rectTransform,
+                rectTransform.anchoredPosition.y + unPressedTileHeight,
+                0.2f,
+                Ease.Linear
+            )
+            .OnComplete(() =>
+            {
+                GameManager.Instance.SetGameOver(true);
+            });
         shouldScroll = false;
-        // rectTransform.anchoredPosition -= new Vector2(0, unPressedTileHeight);
+    }
+
+    private void RestartSong()
+    {
+        lastSpawnedIndex = 0;
+        lastSpawnedTileLine = null;
+        rectTransform.anchoredPosition = restartPosition;
+        currentRectHeight = 0;
+
+        for (int i = 0; i < 10; i++)
+        {
+            ConfigureTile(i);
+        }
+
+        GameManager.Instance.GameCycle += 1;
+        GameManager.Instance.ResetSong();
     }
 }

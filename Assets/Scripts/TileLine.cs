@@ -27,7 +27,7 @@ public class TileLine : MonoBehaviour
     public Action<TileLine> onPassingTheBottomLine;
     public Action<float> onPassingThelineUnPressed;
     public Action onMissClick;
-    private bool hasPassTheLine = false;
+    private bool hasPassTheBottomLine = false;
     private List<TileBehavior> tileTrackers = new List<TileBehavior>();
     private List<MissedTileBehavior> missedTileTrackers = new List<MissedTileBehavior>();
     public ReactiveProperty<int> NumberOfPressedTiles { get; private set; }
@@ -48,14 +48,14 @@ public class TileLine : MonoBehaviour
 
     void OnEnable()
     {
-        hasPassTheLine = false;
+        hasPassTheBottomLine = false;
     }
 
     void Update()
     {
-        if (!hasPassTheLine)
+        if (!hasPassTheBottomLine)
         {
-            HasPassScoringLine();
+            HasPassTheBottomLine();
         }
     }
 
@@ -68,6 +68,7 @@ public class TileLine : MonoBehaviour
     public void GenerateTiles(float[] positions, TileType tileType, float timeLapse)
     {
         TileBehavior tile;
+
         for (int i = 0; i < positions.Length; i++)
         {
             if (tileType == TileType.shortTile)
@@ -88,8 +89,8 @@ public class TileLine : MonoBehaviour
             tile.OnTilePressed(() =>
             {
                 NumberOfPressedTiles.Value--;
-                NumberOfPressedTiles.Subscribe(OnTilesPressedHandler).AddTo(ref eventSubscription);
             });
+            NumberOfPressedTiles.Subscribe(OnTilesPressedHandler).AddTo(ref eventSubscription);
             tileTrackers.Add(tile);
         }
 
@@ -111,11 +112,11 @@ public class TileLine : MonoBehaviour
             missedTile.OnMissedTilePressed(() =>
             {
                 onMissClick?.Invoke();
+                AudioManager.Instance.StopSong();
             });
             missedTile.ResetStats();
             missedTileTrackers.Add(missedTile);
         }
-
         NumberOfPressedTiles.Value = tileTrackers.Count;
     }
 
@@ -143,15 +144,18 @@ public class TileLine : MonoBehaviour
         this.scoringLine = scoringLine;
     }
 
-    public void HasPassScoringLine()
+    public void HasPassTheBottomLine()
     {
         if (upperLimitPoint.position.y < bottomPoint.y)
         {
-            hasPassTheLine = true;
+            GameManager.Instance.NumberOfTileLineLeft--;
+
+            hasPassTheBottomLine = true;
 
             if (NumberOfPressedTiles.CurrentValue == tileTrackers.Count)
             {
                 onPassingThelineUnPressed?.Invoke(rectTransform.rect.height);
+                AudioManager.Instance.StopSong();
 
                 foreach (var tile in tileTrackers)
                 {
@@ -161,6 +165,7 @@ public class TileLine : MonoBehaviour
             else
             {
                 onPassingTheBottomLine?.Invoke(this);
+
                 foreach (var tile in tileTrackers)
                 {
                     if (tile is LongTileBehavior)
@@ -178,9 +183,8 @@ public class TileLine : MonoBehaviour
             {
                 missedTilePrefabPool.Return(item.gameObject);
             }
+            //eventSubscription.Dispose();
         }
-
-        eventSubscription.Dispose();
     }
 
     public void OnPassingTheBottomLine(Action<TileLine> callback)
@@ -208,17 +212,19 @@ public class TileLine : MonoBehaviour
         return rectTransform.anchoredPosition;
     }
 
-    public void SetState()
+    public void ReSetState()
     {
-        hasPassTheLine = false;
+        hasPassTheBottomLine = false;
+        tileTrackers.Clear();
+        missedTileTrackers.Clear();
     }
 
     public void SubscribeToLastTileLine(TileLine tileLine)
     {
         tileLine
-            .NumberOfPressedTiles.Subscribe(i =>
+            .NumberOfPressedTiles.Subscribe(n =>
             {
-                if (i == 0)
+                if (n == 0)
                     EnableTiles();
             })
             .AddTo(ref eventSubscription);
@@ -232,6 +238,14 @@ public class TileLine : MonoBehaviour
         }
     }
 
+    public void SetFirstTile()
+    {
+        foreach (var item in tileTrackers)
+        {
+            item.SetFirstTile();
+        }
+    }
+
     private void OnTilesPressedHandler(int numberOfUnPressedTileLeft)
     {
         if (numberOfUnPressedTileLeft == 0)
@@ -242,4 +256,6 @@ public class TileLine : MonoBehaviour
             }
         }
     }
+
+    
 }

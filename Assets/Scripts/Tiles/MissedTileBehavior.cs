@@ -26,7 +26,12 @@ public class MissedTileBehavior : MonoBehaviour, IPointerDownHandler
         }
         hasPressed = true;
         onMissedTilePressed?.Invoke();
-        Tween.Alpha(image, 0, 0.55f, 0.2f, Ease.Linear, cycles: 4);
+        Tween
+            .Alpha(image, 0, 0.55f, 0.2f, Ease.Linear, cycles: 4)
+            .OnComplete(() =>
+            {
+                GameManager.Instance.SetGameOver(true);
+            });
     }
 
     public void OnMissedTilePressed(Action callback)

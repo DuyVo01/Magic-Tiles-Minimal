@@ -21,8 +21,10 @@ public abstract class TileBehavior : MonoBehaviour, IPointerDownHandler
 
     private bool hasHitTheScoringLine = false;
     private bool hasPastTheScoringLine = false;
+    private bool isFirstTile = false;
     protected float tileTimelapse;
     public Action onTilePressed;
+    protected int gameScore = 0;
 
     public void SetScoringLine(RectTransform scoringLine)
     {
@@ -68,11 +70,18 @@ public abstract class TileBehavior : MonoBehaviour, IPointerDownHandler
         canvasGroup.blocksRaycasts = true;
     }
 
+    public void SetFirstTile()
+    {
+        isFirstTile = true;
+    }
+
     public virtual void AdditionalSetup()
     {
         SetCanvasGroup(1, true);
         canvasGroup.blocksRaycasts = false;
         alertImage.gameObject.SetActive(false);
+        hasHitTheScoringLine = false;
+        hasPastTheScoringLine = false;
     }
 
     public virtual void AdditionalReset()
@@ -91,16 +100,8 @@ public abstract class TileBehavior : MonoBehaviour, IPointerDownHandler
 
         alertImage.gameObject.SetActive(true);
         Tween
-            .Alpha(
-                alertImage,
-                startValue: 0,
-                endValue: 0.55f,
-                0.3f,
-                Ease.Linear,
-                cycles: 4
-            )
-            .OnComplete(() =>
-            {
+            .Alpha(alertImage, startValue: 0, endValue: 0.55f, 0.3f, Ease.Linear, cycles: 4)
+            .OnComplete(() => {
                 //alertImage.gameObject.SetActive(false);
             });
     }
@@ -138,9 +139,24 @@ public abstract class TileBehavior : MonoBehaviour, IPointerDownHandler
 
     public virtual void OnPointerDown(PointerEventData eventData)
     {
-        if (canvasGroup.blocksRaycasts)
+        onTilePressed?.Invoke();
+
+        if (isFirstTile)
         {
-            onTilePressed?.Invoke();
+            AudioManager.Instance.PlaySong();
+        }
+
+        if (hasHitTheScoringLine && !hasPastTheScoringLine)
+        {
+            GameManager.Instance.SetHitPerfectScore(true);
+            GameManager.Instance.SetHitPerfectScore(false);
+            GameManager.Instance.AddGameScore(gameScore + 2);
+        }
+        else
+        {
+            GameManager.Instance.SetHitNormalScore(true);
+            GameManager.Instance.SetHitNormalScore(false);
+            GameManager.Instance.AddGameScore(gameScore);
         }
     }
 }

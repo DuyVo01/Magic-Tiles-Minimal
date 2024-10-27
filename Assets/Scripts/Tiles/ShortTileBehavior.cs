@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class ShortTileBehavior : TileBehavior, IPointerDownHandler
+public class ShortTileBehavior : TileBehavior
 {
     public override void AdditionalSetup()
     {
         base.AdditionalSetup();
+        gameScore = 1;
     }
     public override void OnPointerDown(PointerEventData eventData)
     {
